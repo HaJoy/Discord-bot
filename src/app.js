@@ -67,7 +67,6 @@ client.on(Events.InteractionCreate, async interaction => {
 			await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
 		}
 	}
-	console.log(interaction);
 });
 
 // When the client is ready, run this code (only once).
