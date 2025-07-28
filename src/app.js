@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Require the necessary discord.js classes
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
 
 // Create a new client instance
@@ -10,6 +10,9 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // Crear una nueva coleccion de comandos
 client.commands = new Collection();
+
+// Crear coleccion de cooldowns
+client.cooldowns = new Collection();
 
 // Leyendo los archivso de los comandos
 const foldersPath = path.join(__dirname, 'commands');
@@ -37,44 +40,19 @@ for (const folder of commandFolders) {
 	}
 }
 
-// Escuchar cuando se ejecute un comando slash
-client.on(Events.InteractionCreate, async interaction => {
+// Cargar los archivos de la carpeta events
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-	// Interrumpir el proceso si es un comando diferente a slash
-	if (!interaction.isChatInputCommand()) return;
-
-	// Obtener la instancia del comando por su nombre en la coleccion client.commands
-	const command = interaction.client.commands.get(interaction.commandName);
-
-	// Si no existe el comando informar por consola
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
+for (const file of eventFiles) {
+	const filePath = path.join(eventsPath, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
+	} else {
+		client.on(event.name, (...args) => event.execute(...args));
 	}
-
-	// Intentar ejecutar el execute del respectivo comando
-	try {
-		await command.execute(interaction);
-	}
-	catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			// Si el bot ya respondio, continuar con otro mensaje informando al usuario del error
-			await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-		}
-		else {
-			// Si no, responder informando del error
-			await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-		}
-	}
-});
-
-// When the client is ready, run this code (only once).
-// The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
-// It makes some properties non-nullable.
-client.once(Events.ClientReady, readyClient => {
-	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-});
+}
 
 // Log in to Discord with your client's token
 client.login(process.env.TOKEN);
