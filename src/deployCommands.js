@@ -39,6 +39,17 @@ const rest = new REST().setToken(process.env.TOKEN);
 		);
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		
+		// Commands delete
+		// for guild-based commands
+		// rest.delete(Routes.applicationGuildCommand(process.env.APP_ID, process.env.DEV_GUILD_ID, 'commandId'))
+		// 	.then(() => console.log('Successfully deleted guild command'))
+		// 	.catch(console.error);
+
+		// for global commands
+		// rest.delete(Routes.applicationCommand(clientId, 'commandId'))
+		// 	.then(() => console.log('Successfully deleted application command'))
+		// 	.catch(console.error);
 	} catch (error) {
 		// And of course, make sure you catch and log any errors!
 		console.error(error);
